@@ -33,13 +33,14 @@ The server will start on port 3000 by default (or the port specified in your .en
 ## API Endpoints
 
 ### Authentication
+- `POST /auth/signup` - User registration
+  - Request Body: `{"email": "string", "password": "string", "name": "string"}`
+
 - `POST /auth/login` - User login
   - Request Body: `{"email": "string", "password": "string"}`
   - Returns: `{"token": "string", "user": {...}}`
   - The returned token must be included in the Authorization header for protected routes
   
-- `POST /auth/signup` - User registration
-  - Request Body: `{"email": "string", "password": "string", "name": "string"}`
 
 ### Public Routes
 - `GET /health` - Health check endpoint
