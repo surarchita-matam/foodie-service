@@ -32,8 +32,39 @@ The server will start on port 3000 by default (or the port specified in your .en
 
 ## API Endpoints
 
+### Authentication
+- `POST /auth/login` - User login
+  - Request Body: `{"email": "string", "password": "string"}`
+  - Returns: `{"token": "string", "user": {...}}`
+  - The returned token must be included in the Authorization header for protected routes
+  
+- `POST /auth/signup` - User registration
+  - Request Body: `{"email": "string", "password": "string", "name": "string"}`
+
+### Public Routes
 - `GET /health` - Health check endpoint
   - Returns: `{"status": "healthy"}`
+- `GET /products` - Get all products
+- `GET /products/:id` - Get product by ID
+- `POST /products` - Bulk insert products
+- `GET /coupons` - Get available coupons
+
+### Protected Routes
+All protected routes require a valid JWT token in the header api-key:
+```
+api-key: <token>
+```
+
+Protected endpoints:
+- `POST /orders` - Place a new order
+- `GET /orders` - Get user's old orders
+
+## Authentication
+To access protected routes:
+1. First, authenticate using the login endpoint
+2. Copy the token from the login response
+3. Include the token in the header for all subsequent requests to protected routes
+4. Format: `api-key: <your-token>`
 
 ## Development
 
