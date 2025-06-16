@@ -25,11 +25,4 @@ func main() {
 
 	// Start server (server.go will handle port 3000)
 	CreateServer(ctx)
-
-	// // Wait for context cancellation
-	// <-ctx.Done()
-
-	// // Cleanup resources
-	// fmt.Println("Cleaning up resources...")
-	// fmt.Println("Cleanup completed")
 }

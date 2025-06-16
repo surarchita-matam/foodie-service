@@ -4,16 +4,16 @@ import (
 	"context"
 	"fmt"
 	"foodie-service/controllers"
+
 	// "foodie-service/coupons"
 	"foodie-service/database"
 	"foodie-service/models"
 	"foodie-service/routes"
 	"foodie-service/services"
 
-
-
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
+	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/pprof"
 )
 
@@ -23,6 +23,14 @@ func CreateServer(ctx context.Context) {
 	app := fiber.New(fiber.Config{
 		AppName: "Foodie Service v1.0.0",
 	})
+
+	// Add logger middleware
+	app.Use(logger.New(logger.Config{
+		Format:     "${time} | ${status} | ${latency} | ${method} | ${path}\n",
+		TimeFormat: "2006-01-02 15:04:05",
+		TimeZone:   "Local",
+	}))
+
 	app.Use(pprof.New())
 
 	// Add panic recovery middleware

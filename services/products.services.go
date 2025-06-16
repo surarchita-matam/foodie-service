@@ -14,9 +14,4 @@ func NewProductsService(models *models.BaseModel) *ProductsService {
 	}
 }
 
-// Add your product service methods here
-// Example:
-// func (s *ProductsService) GetProduct(id string) (*models.Product, error) {
-//     return s.model.GetProduct(id)
-// }
 

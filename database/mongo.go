@@ -36,9 +36,7 @@ func MongoClient(readPreference string) (*Mongo, error) {
 			return mongoClientSecondary, nil
 		}
 	}
-	// Use the SetServerAPIOptions() method to set the version of the Stable API on the client
 	serverAPI := options.ServerAPI(options.ServerAPIVersion1)
-	// get mongo uri from env
 	opts := options.Client().ApplyURI(config.GetConfig().MONGO_URI).SetServerAPIOptions(serverAPI)
 
 	if readPreference == "primary" {
@@ -46,14 +44,12 @@ func MongoClient(readPreference string) (*Mongo, error) {
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	// Create a new client and connect to the server
 	client, err := mongo.Connect(opts)
 	if err != nil {
 		cancel()
 		return nil, fmt.Errorf("failed to initialize common MongoDB client: %w", err)
 	}
 
-	// Send a ping to confirm a successful connection
 	if err := client.Ping(context.TODO(), readpref.Primary()); err != nil {
 		panic(err)
 	}
