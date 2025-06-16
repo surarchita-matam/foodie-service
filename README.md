@@ -34,7 +34,7 @@ The server will start on port 3000 by default (or the port specified in your .en
 
 ### Authentication
 - `POST /auth/signup` - User registration
-  - Request Body: `{"email": "string", "password": "string", "name": "string"}`
+  - Request Body: `{"email": "string", "password": "string"}`
 
 - `POST /auth/login` - User login
   - Request Body: `{"email": "string", "password": "string"}`
