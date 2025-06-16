@@ -42,6 +42,10 @@ func (v *Validator) Struct(data interface{}) error {
 				if field.Int() <= 0 {
 					return errors.New(fieldType.Name + " must be greater than 0")
 				}
+			case reflect.Float32, reflect.Float64:
+				if field.Float() <= 0 {
+					return errors.New(fieldType.Name + " must be greater than 0")
+				}
 			case reflect.Slice:
 				if field.IsNil() || field.Len() == 0 {
 					return errors.New(fieldType.Name + " cannot be empty")
