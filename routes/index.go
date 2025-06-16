@@ -12,16 +12,16 @@ func SetupRoutes(app *fiber.App) {
 
 	api := app.Group("/")
 	// Public routes
+	api.Post("/products", controller.ProductsController.InsertBulkProducts)
 	api.Get("/products", controller.ProductsController.GetProducts)
 	api.Get("/products/:id", controller.ProductsController.GetProductById)
-	// api.Post("/product", controllers.CreateProduct)
 
-	api.Post("/login", controller.AuthController.Login)
-	api.Post("/signup", controller.AuthController.SignUp)
+	// Auth routes
+	api.Post("/auth/login", controller.AuthController.Login)
+	api.Post("/auth/signup", controller.AuthController.SignUp)
 
-	api.Post("/load-products", controller.ProductsController.InsertBulkProducts)
-
-	api.Get("/fetch-coupons", controller.OrdersController.FetchCoupons)
+	// Coupons routes
+	api.Get("/coupons", controller.OrdersController.FetchCoupons)
 
 	// Protected routes
 	secured := api.Group("/orders", utils.ValidateToken())

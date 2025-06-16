@@ -20,20 +20,15 @@ cd foodie-service
 go mod download
 ```
 
-3. (Optional) Create a `.env` file:
-```bash
-PORT=8080
-```
-
 ## Running the Service
 
 To start the service:
 
 ```bash
-go run main.go
+go run .
 ```
 
-The server will start on port 8080 by default (or the port specified in your .env file).
+The server will start on port 3000 by default (or the port specified in your .env file).
 
 ## API Endpoints
 
@@ -42,7 +37,7 @@ The server will start on port 8080 by default (or the port specified in your .en
 
 ## Development
 
-To add new endpoints, modify the `main.go` file and add new routes to the Fiber app. Fiber provides a simple and intuitive API similar to Express.js.
+To add new endpoints, modify the `index.go` file in routes folder and add new routes to the Fiber app. Fiber provides a simple and intuitive API similar to Express.js.
 
 ## Project Structure
 
