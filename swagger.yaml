@@ -7,13 +7,13 @@ info:
     name: Foodie Service Team
 
 servers:
-  - url: http://localhost:3000
-    description: Local development server
+  - url: https://foodie-service-q5c0.onrender.com/
+    description: Production server
 
 components:
   securitySchemes:
     BearerAuth:
-      type: http
+      type: https
       scheme: bearer
       bearerFormat: JWT
       description: JWT token for authentication
