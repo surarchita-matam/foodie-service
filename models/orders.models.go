@@ -2,12 +2,15 @@ package models
 
 import (
 	"context"
+	"fmt"
 	"foodie-service/database"
 	"foodie-service/types"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
 type OrderSchema struct {
@@ -28,33 +31,60 @@ type OrdersModel struct {
 	dbs *database.Mongo
 }
 
-func NewOrdersModel(dbp *database.Mongo, dbs *database.Mongo) *OrdersModel {
-	return &OrdersModel{dbp: dbp, dbs: dbs}
+func (om *OrdersModel) createUniqueIndex() error {
+	collection := om.dbp.MongoClient.Database("foodie").Collection("orders")
+
+	// Create unique indexes for email and userId separately
+	indexModels := []mongo.IndexModel{
+		{
+			Keys:    bson.M{"orderId": 1},
+			Options: options.Index().SetUnique(true),
+		},
+		{
+			Keys:    bson.M{"userId": 1},
+			Options: options.Index(),
+		},
+	}
+	// Create all indexes
+	for _, model := range indexModels {
+		_, err := collection.Indexes().CreateOne(context.TODO(), model)
+		if err != nil {
+			return fmt.Errorf("failed to create index: %w", err)
+		}
+	}
+	return nil
 }
 
-func (om *OrdersModel) GetOrders(readFromPrimary bool) ([]types.Order, error) {
-	var db *database.Mongo
+func NewOrdersModel(dbp *database.Mongo, dbs *database.Mongo) *OrdersModel {
+	om := &OrdersModel{dbp: dbp, dbs: dbs}
 
-	if readFromPrimary {
-		db = om.dbp
-	} else {
-		db = om.dbs
+	if err := om.createUniqueIndex(); err != nil {
+		panic(fmt.Sprintf("failed to create unique index: %v", err))
 	}
+	return om
+}
 
-	collection := db.MongoClient.Database("foodie").Collection("orders")
+func (om *OrdersModel) GetOrders(userID string, limit, offset int) ([]OrderSchema, error) {
+	collection := om.dbp.MongoClient.Database("foodie").Collection("orders")
+	findOptions := options.Find().
+		SetSort(bson.M{"_id": -1}).
+		SetLimit(int64(limit)).
+		SetSkip(int64(offset))
 
-	cursor, err := collection.Find(context.TODO(), bson.M{})
+	cursor, err := collection.Find(context.TODO(), bson.M{"userId": userID}, findOptions)
 	if err != nil {
 		return nil, err
 	}
 	defer cursor.Close(context.TODO())
 
-	var orders []types.Order
-	if err = cursor.All(context.TODO(), &orders); err != nil {
+	var orderSchemas []OrderSchema
+	if err = cursor.All(context.TODO(), &orderSchemas); err != nil {
 		return nil, err
 	}
-
-	return orders, nil
+	// Log for debugging
+	fmt.Printf("Total orders for user %s, Requested limit: %d, offset: %d, Got orders: %d\n",
+		userID, limit, offset, len(orderSchemas))
+	return orderSchemas, nil
 }
 
 func (om *OrdersModel) InsertOrder(order *types.PurchaseDetails, userID string) (*types.PurchaseDetails, error) {
@@ -80,11 +110,11 @@ func (om *OrdersModel) InsertOrder(order *types.PurchaseDetails, userID string) 
 	}
 
 	return &types.PurchaseDetails{
-		OrderID:   orderSchema.OrderID,
-		Items:     orderSchema.Items,
-		TotalPrice: int(orderSchema.TotalPrice),
-		Discount:   int(orderSchema.Discount),
-		FinalPrice: int(orderSchema.FinalPrice),
+		OrderID:    orderSchema.OrderID,
+		Items:      orderSchema.Items,
+		TotalPrice: float64(orderSchema.TotalPrice),
+		Discount:   float64(orderSchema.Discount),
+		FinalPrice: float64(orderSchema.FinalPrice),
 		CouponCode: orderSchema.CouponCode,
 		CreatedAt:  orderSchema.InsertedAt,
 		UpdatedAt:  orderSchema.UpdatedAt,

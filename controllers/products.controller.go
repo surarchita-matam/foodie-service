@@ -8,7 +8,10 @@ import (
 	"foodie-service/types"
 	"foodie-service/utils"
 
+	"strconv"
+
 	"github.com/gofiber/fiber/v2"
+	"go.mongodb.org/mongo-driver/v2/mongo"
 )
 
 type ProductsController struct {
@@ -37,20 +40,29 @@ func (pc *ProductsController) GetProducts(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(fiber.Map{
-		"message": "Products fetched successfully",
+		"message":  "Products fetched successfully",
 		"products": products,
 	})
 }
 
 func (pc *ProductsController) GetProductById(c *fiber.Ctx) error {
 	id := c.Params("id")
-	product, err := pc.models.Products.GetProductByProductId(id)
+
+	productId, err := strconv.Atoi(id)
 	if err != nil {
+		return utils.ErrorHandler("Invalid product ID", "Product ID must be a valid integer", fiber.StatusBadRequest, c)
+	}
+
+	product, err := pc.models.Products.GetProductByProductId(strconv.Itoa(productId))
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return utils.ErrorHandler("Product not found", "No product found with the given ID", fiber.StatusNotFound, c)
+		}
 		return utils.ErrorHandler("Error fetching product", err.Error(), fiber.StatusInternalServerError, c)
 	}
 	return c.JSON(fiber.Map{
-		"message":  "Product fetched successfully",
-		"product":  product,
+		"message": "Product fetched successfully",
+		"product": product,
 	})
 }
 

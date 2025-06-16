@@ -4,10 +4,13 @@ import (
 	"context"
 	"fmt"
 	"foodie-service/controllers"
+	// "foodie-service/coupons"
 	"foodie-service/database"
 	"foodie-service/models"
 	"foodie-service/routes"
 	"foodie-service/services"
+
+
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
@@ -16,6 +19,7 @@ import (
 
 // CreateServer initializes and starts the Fiber server on port 3000
 func CreateServer(ctx context.Context) {
+
 	app := fiber.New(fiber.Config{
 		AppName: "Foodie Service v1.0.0",
 	})
@@ -46,6 +50,14 @@ func CreateServer(ctx context.Context) {
 	models := models.NewBaseModel(mongoClientPrimary, mongoClientSecondary)
 	services := services.NewBaseService(models)
 	controllers.NewBaseController(services, models)
+
+	// Initialize coupon package
+	fmt.Println("Loading coupons into memory...")
+	if err := services.Coupons.Init(ctx); err != nil {
+		fmt.Printf("Failed to load coupons: %v\n", err)
+		return
+	}
+	fmt.Println("Coupons loaded successfully.")
 	// Health check endpoint
 	app.Get("/health", func(c *fiber.Ctx) error {
 		return c.JSON(fiber.Map{

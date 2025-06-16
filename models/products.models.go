@@ -2,6 +2,7 @@ package models
 
 import (
 	"context"
+	"fmt"
 	"foodie-service/database"
 	"foodie-service/types"
 	"time"
@@ -9,6 +10,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
 /*
@@ -34,14 +36,14 @@ type Image struct {
 }
 
 type Product struct {
-	ID         string             `json:"_id" bson:"_id"`
-	ProductID  string             `json:"productId" bson:"productId" unique:"true"`
-	Image      Image              `json:"image" bson:"image"`
-	Name       string             `json:"name" bson:"name"`
-	Category   string             `json:"category" bson:"category"`
-	Price      float64            `json:"price" bson:"price"`
-	InsertedAt time.Time          `json:"insertedAt" bson:"insertedAt"`
-	UpdatedAt  time.Time          `json:"updatedAt" bson:"updatedAt"`
+	ID         string    `json:"_id" bson:"_id"`
+	ProductID  string    `json:"productId" bson:"productId" unique:"true"`
+	Image      Image     `json:"image" bson:"image"`
+	Name       string    `json:"name" bson:"name"`
+	Category   string    `json:"category" bson:"category"`
+	Price      float64   `json:"price" bson:"price"`
+	InsertedAt time.Time `json:"insertedAt" bson:"insertedAt"`
+	UpdatedAt  time.Time `json:"updatedAt" bson:"updatedAt"`
 }
 
 type ProductsModel struct {
@@ -49,8 +51,28 @@ type ProductsModel struct {
 	dbs *database.Mongo
 }
 
+func (pm *ProductsModel) createUniqueIndex() error {
+	collection := pm.dbp.MongoClient.Database("foodie").Collection("products")
+
+	// Create a unique index on productId
+	indexModel := mongo.IndexModel{
+		Keys: bson.M{
+			"productId": 1,
+		},
+		Options: options.Index().SetUnique(true),
+	}
+
+	_, err := collection.Indexes().CreateOne(context.TODO(), indexModel)
+	return err
+}
+
 func NewProductsModel(dbp *database.Mongo, dbs *database.Mongo) *ProductsModel {
-	return &ProductsModel{dbp: dbp, dbs: dbs}
+	pm := &ProductsModel{dbp: dbp, dbs: dbs}
+
+	if err := pm.createUniqueIndex(); err != nil {
+		panic(fmt.Sprintf("failed to create unique index: %v", err))
+	}
+	return pm
 }
 
 func (pm *ProductsModel) GetProducts(readFromPrimary bool) ([]types.Product, error) {
@@ -125,6 +147,10 @@ func (pm *ProductsModel) InsertBulkProducts(products []types.Product) error {
 
 	_, err := collection.BulkWrite(context.TODO(), bulkWrite)
 	if err != nil {
+		// Check if error is due to duplicate key
+		if mongo.IsDuplicateKeyError(err) {
+			return fmt.Errorf("duplicate productId found: %v", err)
+		}
 		return err
 	}
 

@@ -9,6 +9,8 @@ import (
 	"github.com/google/uuid"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
 type UserSchema struct {
@@ -25,11 +27,38 @@ type AuthModel struct {
 	dbs *database.Mongo
 }
 
-func NewAuthModel(mongoClientPrimary *database.Mongo, mongoClientSecondary *database.Mongo) *AuthModel {
-	return &AuthModel{
-		dbp: mongoClientPrimary,
-		dbs: mongoClientSecondary,
+func (am *AuthModel) createUniqueIndex() error {
+	collection := am.dbp.MongoClient.Database("foodie").Collection("users")
+
+	// Create unique indexes for email and userId separately
+	indexModels := []mongo.IndexModel{
+		{
+			Keys:    bson.M{"email": 1},
+			Options: options.Index().SetUnique(true),
+		},
+		{
+			Keys:    bson.M{"userId": 1},
+			Options: options.Index().SetUnique(true),
+		},
 	}
+
+	// Create all indexes
+	for _, model := range indexModels {
+		_, err := collection.Indexes().CreateOne(context.TODO(), model)
+		if err != nil {
+			return fmt.Errorf("failed to create index: %w", err)
+		}
+	}
+	return nil
+}
+
+func NewAuthModel(mongoClientPrimary *database.Mongo, mongoClientSecondary *database.Mongo) *AuthModel {
+	am := &AuthModel{dbp: mongoClientPrimary, dbs: mongoClientSecondary}
+
+	if err := am.createUniqueIndex(); err != nil {
+		panic(fmt.Sprintf("failed to create unique index: %v", err))
+	}
+	return am
 }
 
 func (am *AuthModel) GetUserByEmail(email string) (*UserSchema, error) {

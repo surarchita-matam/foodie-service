@@ -9,7 +9,7 @@ import (
 
 func SetupRoutes(app *fiber.App) {
 	controller := controllers.GetController()
-	
+
 	api := app.Group("/")
 	// Public routes
 	api.Get("/products", controller.ProductsController.GetProducts)
@@ -21,9 +21,10 @@ func SetupRoutes(app *fiber.App) {
 
 	api.Post("/load-products", controller.ProductsController.InsertBulkProducts)
 
+	api.Get("/fetch-coupons", controller.OrdersController.FetchCoupons)
+
 	// Protected routes
 	secured := api.Group("/orders", utils.ValidateToken())
 	secured.Post("/", controller.OrdersController.PlaceOrder)
-
-
+	secured.Get("/", controller.OrdersController.GetOrders)
 }

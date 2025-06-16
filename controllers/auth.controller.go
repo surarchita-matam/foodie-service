@@ -3,9 +3,8 @@ package controllers
 import (
 	"foodie-service/models"
 	"foodie-service/services"
-	"foodie-service/utils"
 	"foodie-service/types"
-
+	"foodie-service/utils"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -26,13 +25,13 @@ func NewAuthController(services *services.BaseService, models *models.BaseModel)
 }
 
 func (ac *AuthController) Login(c *fiber.Ctx) error {
-    var userDetails types.SignInRequest
+	var userDetails types.SignInRequest
 
-    if err := c.BodyParser(&userDetails); err != nil {
-        return utils.ErrorHandler("Invalid request body", err.Error(), fiber.StatusBadRequest, c)
-    }
+	if err := c.BodyParser(&userDetails); err != nil {
+		return utils.ErrorHandler("Invalid request body", err.Error(), fiber.StatusBadRequest, c)
+	}
 
-    signInResponse, err := ac.services.Auth.SignIn(userDetails.Email, userDetails.Password)	
+	signInResponse, err := ac.services.Auth.SignIn(userDetails.Email, userDetails.Password)
 	if err != nil {
 		return utils.ErrorHandler("Invalid email or password", err.Error(), fiber.StatusUnauthorized, c)
 	}
@@ -40,13 +39,18 @@ func (ac *AuthController) Login(c *fiber.Ctx) error {
 }
 
 func (ac *AuthController) SignUp(c *fiber.Ctx) error {
-    var userDetails *types.SignupRequest
+	var userDetails types.SignupRequest
 
-    if err := c.BodyParser(&userDetails); err != nil {
-        return utils.ErrorHandler("Invalid request body", err.Error(), fiber.StatusBadRequest, c)
-    }
+	if err := c.BodyParser(&userDetails); err != nil {
+		return utils.ErrorHandler("Invalid request body", err.Error(), fiber.StatusBadRequest, c)
+	}
 
-    signUpResponse, err := ac.services.Auth.SignUp(userDetails)	
+	// Validate the request
+	if err := utils.Validate(userDetails); err != nil {
+		return utils.ErrorHandler("Validation failed", err.Error(), fiber.StatusBadRequest, c)
+	}
+
+	signUpResponse, err := ac.services.Auth.SignUp(&userDetails)
 	if err != nil {
 		return utils.ErrorHandler("Failed to sign up", err.Error(), fiber.StatusInternalServerError, c)
 	}

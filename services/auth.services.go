@@ -6,6 +6,7 @@ import (
 	"foodie-service/models"
 	"foodie-service/types"
 	"foodie-service/utils"
+	"regexp"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -16,6 +17,22 @@ type AuthService struct {
 
 func NewAuthService(models *models.BaseModel) *AuthService {
 	return &AuthService{models: models}
+}
+
+func PasswordStrengthCheck(password string) bool {
+	numberRegex := regexp.MustCompile(`[0-9]`)
+	uppercharRegex := regexp.MustCompile(`[A-Z]`)
+	lowercharRegex := regexp.MustCompile(`[a-z]`)
+	specialCharacterRegex := regexp.MustCompile(`[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]`)
+
+	if len(password) > 7 && len(password) < 25 &&
+		numberRegex.MatchString(password) &&
+		uppercharRegex.MatchString(password) &&
+		lowercharRegex.MatchString(password) &&
+		specialCharacterRegex.MatchString(password) {
+		return true
+	}
+	return false
 }
 
 func (as *AuthService) SignIn(email string, password string) (*types.SignInResponse, error) {
@@ -44,6 +61,11 @@ func (as *AuthService) SignUp(userDetails *types.SignupRequest) (*types.SignupRe
 	existingUser, _ := as.models.Auth.GetUserByEmail(userDetails.Email)
 	if existingUser != nil {
 		return nil, errors.New("user already exists")
+	}
+
+	isPasswordStrong := PasswordStrengthCheck(userDetails.Password)
+    if(!isPasswordStrong){
+		return nil, errors.New("passowrd is weak")
 	}
 
 	// use bcrypt to hash password
